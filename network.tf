@@ -16,7 +16,7 @@ resource "aws_vpc" "Jetsky_VPC" {
 resource "aws_subnet" "Web_public_subnet_1" {
   vpc_id                  = aws_vpc.Jetsky_VPC.id
   cidr_block              = var.public_subnet_1_cidr
-  availability_zone       = var.public_subnet_1_AZ
+  availability_zone       = var.public_subnet_1_AZ[0]
   map_public_ip_on_launch = true
   tags = {
     Name = var.public_subnet_1_name_tag
@@ -26,7 +26,7 @@ resource "aws_subnet" "Web_public_subnet_1" {
 resource "aws_subnet" "Web_public_subnet_2" {
   vpc_id                  = aws_vpc.Jetsky_VPC.id
   cidr_block              = var.public_subnet_2_cidr
-  availability_zone       = var.public_subnet_2_AZ
+  availability_zone       = var.public_subnet_2_AZ[0]
   map_public_ip_on_launch = true
   tags = {
     Name = var.public_subnet_2_name_tag
@@ -37,7 +37,7 @@ resource "aws_subnet" "Web_public_subnet_2" {
 resource "aws_subnet" "app_private_subnet_1" {
   vpc_id                  = aws_vpc.Jetsky_VPC.id
   cidr_block              = var.app_private_subnet_1_cidr
-  availability_zone       = var.app_private_subnet_1_AZ
+  availability_zone       = var.app_private_subnet_1_AZ[0]
   map_public_ip_on_launch = false
   tags = {
     Name = var.app_private_subnet_1_name_tag
@@ -47,7 +47,7 @@ resource "aws_subnet" "app_private_subnet_1" {
 resource "aws_subnet" "app_private_subnet_2" {
   vpc_id                  = aws_vpc.Jetsky_VPC.id
   cidr_block              = var.app_private_subnet_2_cidr
-  availability_zone       = var.app_private_subnet_2_AZ
+  availability_zone       = var.app_private_subnet_2_AZ[0]
   map_public_ip_on_launch = false
   tags = {
     Name = var.app_private_subnet_2_name_tag
@@ -58,7 +58,7 @@ resource "aws_subnet" "app_private_subnet_2" {
 resource "aws_subnet" "db_private_subnet_1" {
   vpc_id                  = aws_vpc.Jetsky_VPC.id
   cidr_block              = var.db_private_subnet_1_cidr
-  availability_zone       = var.db_private_subnet_1_AZ
+  availability_zone       = var.db_private_subnet_1_AZ[0]
   map_public_ip_on_launch = false
   tags = {
     Name = var.db_private_subnet_1_name_tag
@@ -68,7 +68,7 @@ resource "aws_subnet" "db_private_subnet_1" {
 resource "aws_subnet" "db_private_subnet_2" {
   vpc_id                  = aws_vpc.Jetsky_VPC.id
   cidr_block              = var.db_private_subnet_2_cidr
-  availability_zone       = var.db_private_subnet_2_AZ
+  availability_zone       = var.db_private_subnet_2_AZ[0]
   map_public_ip_on_launch = false
   tags = {
     Name = var.db_private_subnet_2_name_tag
@@ -249,7 +249,7 @@ resource "aws_route_table_association" "DB_private_subnet_2_Ass" {
 resource "aws_security_group" "Frontend_LB_SG" {
   name        = "Frontend_LB_Security_Group"
   description = "allows_inbound_traffic_from_users_from_internet"
-  vpc_id      = aws_vpc.Jetsky_VPC
+  vpc_id      = aws_vpc.Jetsky_VPC.id
 
   ingress {
     description = "all_inbound_traffic_via_port_80_from_internet"
@@ -277,7 +277,7 @@ resource "aws_security_group" "Frontend_LB_SG" {
 resource "aws_security_group" "Backend_LB_SG" {
   name        = "Backend_LB_Security_Group"
   description = "allows_inbound_traffic_from_webservers_SG"
-  vpc_id      = aws_vpc.Jetsky_VPC
+  vpc_id      = aws_vpc.Jetsky_VPC.id
 
   ingress {
     description     = "all_inbound_traffic_via_port_80_from_webserver_sg"
@@ -307,7 +307,7 @@ resource "aws_security_group" "Backend_LB_SG" {
 resource "aws_security_group" "Webservers_SG" {
   name        = "Webservers_Security_Group"
   description = "Allows_all_inbound_traffic_via_frontend_LB"
-  vpc_id      = aws_vpc.Jetsky_VPC
+  vpc_id      = aws_vpc.Jetsky_VPC.id
 
   ingress {
     description     = "all_traffic_via_port_80_from_frontend_LB"
@@ -336,7 +336,7 @@ resource "aws_security_group" "Webservers_SG" {
 resource "aws_security_group" "Appservers_SG" {
   name        = "Appservers_Security_Group"
   description = "allows_inbound_traffic_via_backend_LB"
-  vpc_id      = aws_vpc.Jetsky_VPC
+  vpc_id      = aws_vpc.Jetsky_VPC.id
 
   ingress {
     description = "Allows_traffic_via_port22_for_my_Ip"
@@ -374,7 +374,7 @@ resource "aws_security_group" "Appservers_SG" {
 resource "aws_security_group" "DBservers_SG" {
   name        = "DBservers_Security_Group"
   description = "allows_inbound_traffic_from_users_within_that_vpc"
-  vpc_id      = aws_vpc.Jetsky_VPC
+  vpc_id      = aws_vpc.Jetsky_VPC.id
 
   ingress {
     description     = "Allows_traffic_via_port22_for_my_Ip"
@@ -390,7 +390,7 @@ resource "aws_security_group" "DBservers_SG" {
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
-    security_groups = [aws_security_group.Appservers_SG]
+    security_groups = [aws_security_group.Appservers_SG.id]
   }
   egress {
     from_port   = 0

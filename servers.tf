@@ -3,18 +3,18 @@
 # Public Subnets in whcih the Webservers are to be hosted
 
 locals {
-  Webservers_subnet_ids = [
-    "aws_subnet.Web_public_subnet_1.id", 
-    "aws_subnet.Web_public_subnet_2.id"
-  ]
+  webserver_subnet_ids = [
+ "aws_subnet.Web_public_subnet_1.id",
+ "aws_subnet.Web_public_subnet_2.id"
+ ]
 }
 
 # Private Subnets in whcih the Appservers are to be hosted
 
 locals {
-  Appservers_subnet_ids = [
-    "aws_subnet.app_private_subnet_1.id", 
-    "aws_subnet.app_private_subnet_2.id"
+  Appserver_subnet_ids = [
+   "aws_subnet.app_private_subnet_1.id",
+   "aws_subnet.app_private_subnet_2.id" 
   ]
 }
 
@@ -32,25 +32,25 @@ locals {
 # Frontend_LB_SG
 
 locals {
-  Frontend_Loadbalancer = [aws_security_group.Frontend_LB_SG]
+  Frontend_Loadbalancer = [aws_security_group.Frontend_LB_SG.id]
 }
 
 # Backend_LB_SG
 
 locals {
-  Backend_Loadbalancer = [aws_security_group.Backend_LB_SG]
+  Backend_Loadbalancer = [aws_security_group.Backend_LB_SG.id]
 }
 
 # Webservers SG locals
 
 locals {
-  Webservers_SG = [aws_security_group.Webservers_SG]
+  Webservers_SG = [aws_security_group.Webservers_SG.id]
 }
 
 # Appservers SG locals
 
 locals {
-  Appservers_SG = [aws_security_group.Appservers_SG]
+  Appservers_SG = [aws_security_group.Appservers_SG.id]
 }
 
 
@@ -62,26 +62,26 @@ locals {
 #Webserver instances
 
 resource "aws_instance" "Web_server_Jetsky" {
-  count           = length(var.webserver_subnet_id)
-  subnet_id       = var.webserver_subnet_id
-  ami             = var.webserver_ami_id
-  instance_type   = var.webserver_instance_type
+  count           = length(local.webserver_subnet_ids)
+  subnet_id       = local.webserver_subnet_ids[count.index]
+  ami             = var.webserver_ami_id[count.index]
+  instance_type   = var.webserver_instance_type[count.index]
   security_groups = local.Webservers_SG
   tags = {
-    Name = var.webserver_name_tag
+    Name = var.webserver_name_tag[count.index]
   }
 }
 
 # Appserver Instances
 
 resource "aws_instance" "App_server_Jetsky" {
-  count           = length(var.Appserver_subnet_id)
-  subnet_id       = var.Appserver_subnet_id
-  ami             = var.Appserver_ami_id
-  instance_type   = var.Appserver_instance_type
+  count           = length(local.Appserver_subnet_ids)
+  subnet_id       = local.Appserver_subnet_ids[count.index]
+  ami             = var.Appserver_ami_id[count.index]
+  instance_type   = var.Appserver_instance_type[count.index]
   security_groups = local.Appservers_SG
   tags = {
-    Name = var.Appserver_name_tag
+    Name = var.Appserver_name_tag[count.index]
   }
 }
 
@@ -114,7 +114,7 @@ resource "aws_lb" "Frontend_LB" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = local.Frontend_Loadbalancer
-  subnets            = local.Webservers_subnet_ids
+  subnets            = local.webserver_subnet_ids
 
   enable_deletion_protection = true
 
@@ -124,7 +124,7 @@ resource "aws_lb" "Frontend_LB" {
 }
 
 resource "aws_lb_target_group" "Frontend_LB_TG" {
-  name        = "${var.Frontend_LB_name_tag}-Tg"
+  name        = "Frontend-LB-Target-group"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = aws_vpc.Jetsky_VPC.id
@@ -148,7 +148,7 @@ resource "aws_lb" "Backend_LB" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = local.Backend_Loadbalancer
-  subnets            = local.Appservers_subnet_ids
+  subnets            = local.Appserver_subnet_ids
 
   enable_deletion_protection = true
 
@@ -158,7 +158,7 @@ resource "aws_lb" "Backend_LB" {
 }
 
 resource "aws_lb_target_group" "Backend_LB_TG" {
-  name        = "${var.Backend_LB_name_tag}-Tg"
+  name        = "Backend-LB-Target-group"
   port        = 80
   protocol    = "HTTP"
   target_type = "instance"
